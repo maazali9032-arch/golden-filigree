@@ -15,6 +15,7 @@ dist-ssr
 .tanstack/**
 .nitro
 *.local
+.env
 
 # Wrangler / Cloudflare
 .wrangler/
@@ -30,3 +31,31 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Build / deployment
+dist/
+dist-ssr/
+.output/
+
+# Wrangler / Cloudflare
+.wrangler/
+
+# Vercel
+.vercel/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Local development
+*.local
