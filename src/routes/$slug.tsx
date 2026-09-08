@@ -37,7 +37,7 @@ export const Route = createFileRoute("/$slug")({
 });
 
 function InvitationRoute() {
-  const { slug: rawSlug } = Route.useParams();
+  const { slug: routeSlug } = Route.useParams();
   const [payload, setPayload] = useState<ZarPayload | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
@@ -49,7 +49,7 @@ function InvitationRoute() {
 
   useEffect(() => {
     let active = true;
-    const slug = readSlug(`/${rawSlug ?? ""}`);
+    const slug = readSlug(window.location.pathname);
     if (!slug) {
       setPayload({ state: "not_found" });
       setStatus("ready");
@@ -69,20 +69,23 @@ function InvitationRoute() {
     return () => {
       active = false;
     };
-  }, [rawSlug, attempt]);
+  }, [routeSlug, attempt]);
 
   if (status === "loading") return <LoadingState />;
   if (status === "error" || !payload) return <ErrorState onRetry={retry} />;
   if (payload.state === "not_found") return <NotFoundState />;
-  if (payload.state === "fallback")
-    return <FallbackState brandName={payload.brand_name} message={payload.fallback_message} />;
+  if (payload.state === "fallback") return <FallbackState />;
 
   const content = payload.content;
   if (!content) return <NotFoundState />;
 
-  const events = content.events ?? [];
-  const gallery = content.gallery ?? [];
-  const musicEnabled = Boolean(content.music_enabled && content.music_url);
+  const events = Array.isArray(content.events)
+    ? content.events.filter((event) => event && typeof event === "object")
+    : [];
+  const gallery = Array.isArray(content.gallery) ? content.gallery : [];
+  const musicEnabled = Boolean(
+    content.music_enabled && typeof content.music_url === "string" && content.music_url.trim(),
+  );
 
   return (
     <main className="zar-page relative min-h-screen overflow-x-hidden">

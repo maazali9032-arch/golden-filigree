@@ -1,9 +1,6 @@
 import { useReducedMotion } from "motion/react";
 
-/**
- * Global floating brand ribbon.
- * Data-driven: the brand name always comes from the public RPC payload.
- */
+/** Global floating brand ribbon. */
 export function BrandTicker({ brandName }: { brandName?: string | null | undefined }) {
   const reduce = useReducedMotion();
   const name = brandName?.trim();
@@ -38,4 +35,3 @@ export function BrandTicker({ brandName }: { brandName?: string | null | undefin
     </div>
   );
 }
-

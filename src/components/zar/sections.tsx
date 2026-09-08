@@ -2,7 +2,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { Heart, Leaf, MapPin, Phone, MessageCircle, Music2, Pause } from "lucide-react";
-import type { ZarContact, ZarEvent, ZarInvitationContent } from "@/lib/zar/invitation";
+import type { ZarContact, ZarEvent, ZarGalleryItem, ZarInvitationContent } from "@/lib/zar/invitation";
 import {
   FiligreeArch,
   FiligreeCorner,
@@ -152,13 +152,13 @@ export function HeroSection({ content }: { content: ZarInvitationContent }) {
 function CoupleDetails({ content }: { content: ZarInvitationContent }) {
   const cols = [
     {
-      photo: content.groom_photo,
+      photo: content.groom_photo_url,
       name: content.groom_name,
       qualification: content.groom_qualification,
       occupation: content.groom_occupation,
     },
     {
-      photo: content.bride_photo,
+      photo: content.bride_photo_url,
       name: content.bride_name,
       qualification: content.bride_qualification,
       occupation: content.bride_occupation,
@@ -242,9 +242,8 @@ export function DateSection({ content }: { content: ZarInvitationContent }) {
 
 /* ── 5. Invitation message + family ─────────────────────────── */
 export function MessageSection({ content }: { content: ZarInvitationContent }) {
-  const relatives = (content.relatives ?? []).filter((r) => has(r));
+  const relatives = typeof content.relatives === "string" && has(content.relatives) ? [content.relatives] : [];
   const anything =
-    has(content.invitation_message) ||
     has(content.groom_parents) ||
     has(content.bride_parents) ||
     relatives.length > 0;
@@ -258,13 +257,6 @@ export function MessageSection({ content }: { content: ZarInvitationContent }) {
           With the blessings of our families
         </p>
       </Rise>
-      {has(content.invitation_message) && (
-        <Rise delay={0.2}>
-          <p className="mx-auto mt-6 max-w-sm font-display text-lg leading-relaxed text-ink/90">
-            {content.invitation_message}
-          </p>
-        </Rise>
-      )}
       <FiligreeDivider delay={0.6} className="mx-auto mt-8" />
       {(has(content.groom_parents) || has(content.bride_parents)) && (
         <Rise delay={0.4}>
@@ -294,7 +286,7 @@ export function MessageSection({ content }: { content: ZarInvitationContent }) {
 
 /* ── 6. Events ──────────────────────────────────────────────── */
 export function EventsSection({ events }: { events: ZarEvent[] }) {
-  const list = events.filter((e) => has(e.name ?? e.title) || has(e.date) || has(e.time));
+  const list = events.filter((e) => has(e.name ?? e.title ?? e.event_name) || has(e.date ?? e.event_date) || has(e.time ?? e.start_time));
   if (!list.length) return null;
   return (
     <Section className="text-center">
@@ -308,21 +300,21 @@ export function EventsSection({ events }: { events: ZarEvent[] }) {
             <Rise delay={0.05 * i}>
               <div className="flex flex-col items-center gap-2">
                 <Leaf className="h-4 w-4 text-gold" aria-hidden="true" />
-                <p className="font-display text-2xl text-ink">{e.name ?? e.title}</p>
-                {has(e.date) && (
+                <p className="font-display text-2xl text-ink">{e.name ?? e.title ?? e.event_name}</p>
+                {has(e.date ?? e.event_date) && (
                   <p className="font-sans text-[11px] tracking-[0.22em] text-ink-soft">
-                    {formatDate(e.date)}
+                    {formatDate(e.date ?? e.event_date)}
                   </p>
                 )}
-                {has(e.time) && (
-                  <p className="font-sans text-[11px] tracking-[0.22em] text-ink-soft">{e.time}</p>
+                {has(e.time ?? e.start_time) && (
+                  <p className="font-sans text-[11px] tracking-[0.22em] text-ink-soft">{e.time ?? e.start_time}</p>
                 )}
-                {has(e.venue) && (
-                  <p className="max-w-xs font-display text-base text-ink-soft">{e.venue}</p>
+                {has(e.venue ?? e.venue_name) && (
+                  <p className="max-w-xs font-display text-base text-ink-soft">{e.venue ?? e.venue_name}</p>
                 )}
-                {has(e.note) && (
+                {has(e.note ?? e.description) && (
                   <p className="max-w-xs font-sans text-[11px] tracking-[0.14em] text-ink-soft/80">
-                    {e.note}
+                    {e.note ?? e.description}
                   </p>
                 )}
               </div>
@@ -338,9 +330,9 @@ export function EventsSection({ events }: { events: ZarEvent[] }) {
 /* ── 7. Venue ───────────────────────────────────────────────── */
 export function VenueSection({ content }: { content: ZarInvitationContent }) {
   const anything =
-    has(content.venue_name) || has(content.venue_address) || has(content.venue_city) || has(content.venue_image);
+    has(content.venue_name) || has(content.venue_address) || has(content.city) || has(content.venue_image_url);
   if (!anything) return null;
-  const mapsUrl = has(content.venue_maps_url) ? (content.venue_maps_url as string) : null;
+  const mapsUrl = has(content.maps_url) ? (content.maps_url as string) : null;
 
   return (
     <Section className="text-center">
@@ -349,10 +341,10 @@ export function VenueSection({ content }: { content: ZarInvitationContent }) {
       </Rise>
       <FiligreeDivider delay={0.3} className="mx-auto mt-4" />
       <FiligreeFrame className="mt-8" delay={0.3}>
-        {has(content.venue_image) && (
+        {has(content.venue_image_url) && (
           <Rise>
             <img
-              src={content.venue_image as string}
+              src={content.venue_image_url as string}
               alt={content.venue_name ?? "Venue"}
               loading="lazy"
               className="mb-6 h-48 w-full rounded-sm border border-gold/30 object-cover"
@@ -364,10 +356,10 @@ export function VenueSection({ content }: { content: ZarInvitationContent }) {
             <p className="font-display text-2xl leading-snug text-ink">{content.venue_name}</p>
           </Rise>
         )}
-        {(has(content.venue_address) || has(content.venue_city)) && (
+        {(has(content.venue_address) || has(content.city)) && (
           <Rise delay={0.2}>
             <p className="mt-3 font-sans text-[11px] leading-relaxed tracking-[0.16em] text-ink-soft">
-              {[content.venue_address, content.venue_city].filter(has).join(", ")}
+          {[content.venue_address, content.city].filter(has).join(", ")}
             </p>
           </Rise>
         )}
@@ -389,8 +381,15 @@ export function VenueSection({ content }: { content: ZarInvitationContent }) {
 }
 
 /* ── 8. Gallery ─────────────────────────────────────────────── */
-export function GallerySection({ gallery }: { gallery: string[] }) {
-  const photos = gallery.filter(has);
+export function GallerySection({ gallery }: { gallery: Array<string | ZarGalleryItem> }) {
+  const photos = (gallery ?? []).flatMap((item) => {
+    if (typeof item === "string" && has(item)) return [item];
+    if (item && typeof item === "object") {
+      const src = item.url ?? item.src ?? item.image_url;
+      if (has(src)) return [src as string];
+    }
+    return [];
+  });
   if (!photos.length) return null;
   return (
     <Section className="text-center">
@@ -484,7 +483,7 @@ export function ClosingSection({
   content: ZarInvitationContent;
   publicUrl?: string | null | undefined;
 }) {
-  const contacts = (content.contacts ?? []).filter((c) => has(c.phone)).slice(0, 2);
+  const contacts = Array.isArray(content.contacts) ? content.contacts.filter((c) => c && typeof c === "object" && has(c.phone)).slice(0, 2) : [];
   return (
     <Section className="pb-28 text-center">
       <FiligreeArch className="mx-auto max-w-[320px]" />
@@ -504,7 +503,7 @@ export function ClosingSection({
         </div>
       )}
 
-      {has(publicUrl) && <QrPlaque url={publicUrl as string} label={content.qr_label} />}
+      {has(publicUrl) && <QrPlaque url={publicUrl as string} label={content.qr_text} />}
 
       {(has(content.groom_name) || has(content.bride_name)) && (
         <Rise delay={0.3}>
@@ -531,11 +530,6 @@ function ContactCard({ contact, delay }: { contact: ZarContact; delay: number })
     <Rise delay={delay}>
       <div className="zar-plaque flex flex-col items-center gap-3 rounded-sm border border-gold/35 px-5 py-5">
         {has(contact.name) && <p className="font-display text-xl text-ink">{contact.name}</p>}
-        {has(contact.relation) && (
-          <p className="font-sans text-[10px] uppercase tracking-[0.26em] text-ink-soft">
-            {contact.relation}
-          </p>
-        )}
         <div className="flex gap-3">
           <a
             href={`tel:${phone}`}

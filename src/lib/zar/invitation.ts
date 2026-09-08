@@ -4,55 +4,72 @@ export type LifecycleState = "live" | "fallback" | "not_found";
 
 export interface ZarContact {
   name?: string | null;
-  relation?: string | null;
   phone?: string | null;
   whatsapp_url?: string | null;
 }
 
 export interface ZarEvent {
+  id?: string | null;
   name?: string | null;
   title?: string | null;
+  event_name?: string | null;
   date?: string | null;
+  event_date?: string | null;
   time?: string | null;
+  start_time?: string | null;
   venue?: string | null;
+  venue_name?: string | null;
+  city?: string | null;
+  maps_url?: string | null;
+  mapsUrl?: string | null;
   note?: string | null;
+  description?: string | null;
+}
+
+export interface ZarGalleryItem {
+  url?: string | null;
+  src?: string | null;
+  image_url?: string | null;
+  alt?: string | null;
+  caption?: string | null;
+  width?: number | null;
+  height?: number | null;
+  span?: "tall" | "wide" | null;
 }
 
 export interface ZarInvitationContent {
   invocation?: string | null;
   groom_name?: string | null;
   bride_name?: string | null;
-  groom_photo?: string | null;
-  bride_photo?: string | null;
+  groom_photo_url?: string | null;
+  bride_photo_url?: string | null;
   groom_qualification?: string | null;
   bride_qualification?: string | null;
   groom_occupation?: string | null;
   bride_occupation?: string | null;
   groom_parents?: string | null;
   bride_parents?: string | null;
-  relatives?: string[] | null;
-  invitation_message?: string | null;
+  relatives?: string | null;
   wedding_date?: string | null;
-  invitation_start?: string | null;
-  invitation_end?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
   events?: ZarEvent[] | null;
   venue_name?: string | null;
   venue_address?: string | null;
-  venue_city?: string | null;
-  venue_maps_url?: string | null;
-  venue_image?: string | null;
-  gallery?: string[] | null;
+  city?: string | null;
+  maps_url?: string | null;
+  venue_image_url?: string | null;
+  gallery?: Array<string | ZarGalleryItem> | null;
   music_enabled?: boolean | null;
   music_url?: string | null;
   contacts?: ZarContact[] | null;
-  qr_label?: string | null;
+  qr_text?: string | null;
 }
 
 export interface ZarPayload {
   state: LifecycleState;
   brand_name?: string | null;
   public_url?: string | null;
-  fallback_message?: string | null;
   content?: ZarInvitationContent | null;
 }
 
@@ -100,30 +117,21 @@ export function normalizePayload(raw: unknown): ZarPayload {
   const record = unwrap(raw);
   if (!record) return { state: "not_found" };
 
-  const stateValue = String(
-    pick<string>(record, ["state", "lifecycle", "lifecycle_state", "status"]) ?? "",
-  ).toLowerCase();
+  const stateValue = String(pick<string>(record, ["state"]) ?? "").toLowerCase();
 
   const state: LifecycleState =
     stateValue === "live"
       ? "live"
       : stateValue === "fallback"
         ? "fallback"
-        : stateValue === "not_found" || stateValue === "notfound" || stateValue === ""
+        : stateValue === "not_found" || stateValue === ""
           ? "not_found"
           : "not_found";
 
-  const invitation = (pick<Record<string, unknown>>(record, ["invitation"]) ?? {}) as Record<
-    string,
-    unknown
-  >;
-  const shop = (pick<Record<string, unknown>>(record, ["shop", "brand"]) ?? {}) as Record<
-    string,
-    unknown
-  >;
-
+  const invitation = (pick<Record<string, unknown>>(record, ["invitation"]) ?? {}) as Record<string, unknown>;
+  const shop = (pick<Record<string, unknown>>(record, ["shop"]) ?? {}) as Record<string, unknown>;
   const brand_name =
-    pick<string>(record, ["brand_name", "shop_brand_name", "shop_display_name", "brand"]) ??
+    pick<string>(record, ["brand_name", "shop_brand_name", "shop_display_name"]) ??
     pick<string>(shop, ["brand_name", "display_name", "name"]) ??
     pick<string>(invitation, ["brand_name", "shop_brand_name"]) ??
     null;
@@ -131,22 +139,17 @@ export function normalizePayload(raw: unknown): ZarPayload {
   const public_url =
     pick<string>(invitation, ["public_url"]) ?? pick<string>(record, ["public_url"]) ?? null;
 
+  const candidate = pick<unknown>(record, ["content"]);
   const content =
-    (pick<ZarInvitationContent>(record, ["content", "invitation_content"]) as
-      | ZarInvitationContent
-      | undefined) ??
-    (pick<ZarInvitationContent>(invitation, ["content"]) as ZarInvitationContent | undefined) ??
-    null;
+    candidate && typeof candidate === "object" && !Array.isArray(candidate)
+      ? (candidate as ZarInvitationContent)
+      : null;
 
   return {
     state,
     brand_name,
-    public_url,
-    fallback_message:
-      pick<string>(record, ["fallback_message", "message"]) ??
-      pick<string>(shop, ["fallback_message", "tagline"]) ??
-      null,
     content: state === "live" ? (content ?? null) : null,
+    public_url: state === "live" ? public_url : null,
   };
 }
 

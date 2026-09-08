@@ -37,25 +37,13 @@ export function NotFoundState() {
   );
 }
 
-export function FallbackState({
-  brandName,
-  message,
-}: {
-  brandName?: string | null | undefined;
-  message?: string | null | undefined;
-}) {
+export function FallbackState() {
   return (
     <Shell>
-      {brandName ? (
-        <h1 className="zar-gold-text font-display text-2xl uppercase tracking-[0.22em]">
-          {brandName}
-        </h1>
-      ) : (
-        <h1 className="font-display text-2xl uppercase tracking-[0.22em] text-ink">Invitation</h1>
-      )}
+      <h1 className="font-display text-2xl uppercase tracking-[0.22em] text-ink">Invitation</h1>
       <FiligreeDivider delay={0.6} className="mx-auto my-5" />
       <p className="font-display text-base italic leading-relaxed text-ink-soft">
-        {message ?? "This invitation is not currently available."}
+        This invitation is not currently available.
       </p>
     </Shell>
   );
