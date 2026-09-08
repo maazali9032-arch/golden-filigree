@@ -1,0 +1,102 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useCallback, useEffect, useState } from "react";
+import { fetchInvitation, readSlug, type ZarPayload } from "@/lib/zar/invitation";
+import { BrandTicker } from "@/components/zar/BrandTicker";
+import {
+  ClosingSection,
+  DateSection,
+  EventsSection,
+  GallerySection,
+  HeroSection,
+  MessageSection,
+  MusicToggle,
+  OpeningSection,
+  RsvpSection,
+  VenueSection,
+} from "@/components/zar/sections";
+import { ErrorState, FallbackState, LoadingState, NotFoundState } from "@/components/zar/states";
+
+export const Route = createFileRoute("/$slug")({
+  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Wedding Invitation" },
+      { name: "description", content: "A digital wedding invitation, crafted with care." },
+      { property: "og:title", content: "Wedding Invitation" },
+      {
+        property: "og:description",
+        content: "A digital wedding invitation, crafted with care.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: InvitationRoute,
+  errorComponent: () => <ErrorState onRetry={() => window.location.reload()} />,
+  notFoundComponent: NotFoundState,
+});
+
+function InvitationRoute() {
+  const { slug: rawSlug } = Route.useParams();
+  const [payload, setPayload] = useState<ZarPayload | null>(null);
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [attempt, setAttempt] = useState(0);
+
+  const retry = useCallback(() => {
+    setStatus("loading");
+    setAttempt((a) => a + 1);
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const slug = readSlug(`/${rawSlug ?? ""}`);
+    if (!slug) {
+      setPayload({ state: "not_found" });
+      setStatus("ready");
+      return;
+    }
+    setStatus("loading");
+    fetchInvitation(slug)
+      .then((result) => {
+        if (!active) return;
+        setPayload(result);
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (!active) return;
+        setStatus("error");
+      });
+    return () => {
+      active = false;
+    };
+  }, [rawSlug, attempt]);
+
+  if (status === "loading") return <LoadingState />;
+  if (status === "error" || !payload) return <ErrorState onRetry={retry} />;
+  if (payload.state === "not_found") return <NotFoundState />;
+  if (payload.state === "fallback")
+    return <FallbackState brandName={payload.brand_name} message={payload.fallback_message} />;
+
+  const content = payload.content;
+  if (!content) return <NotFoundState />;
+
+  const events = content.events ?? [];
+  const gallery = content.gallery ?? [];
+  const musicEnabled = Boolean(content.music_enabled && content.music_url);
+
+  return (
+    <main className="zar-page relative min-h-screen overflow-x-hidden">
+      <OpeningSection />
+      <HeroSection content={content} />
+      <DateSection content={content} />
+      <MessageSection content={content} />
+      <EventsSection events={events} />
+      <VenueSection content={content} />
+      <GallerySection gallery={gallery} />
+      <RsvpSection />
+      <ClosingSection content={content} publicUrl={payload.public_url} />
+      <BrandTicker brandName={payload.brand_name} />
+      {musicEnabled && <MusicToggle src={content.music_url as string} />}
+    </main>
+  );
+}
