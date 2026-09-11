@@ -503,7 +503,7 @@ export function ClosingSection({
         </div>
       )}
 
-      {has(publicUrl) && <QrPlaque url={publicUrl as string} label={content.qr_text} />}
+      // QR omitted from invitation card per integration spec
 
       {(has(content.groom_name) || has(content.bride_name)) && (
         <Rise delay={0.3}>

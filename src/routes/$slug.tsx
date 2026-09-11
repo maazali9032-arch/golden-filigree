@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { fetchInvitation, readSlug, type ZarPayload } from "@/lib/zar/invitation";
+import fallbackMusic from "@/leberch-romantic-584475.mp3";
 import { BrandTicker } from "@/components/zar/BrandTicker";
 import {
   ClosingSection,
@@ -83,9 +84,12 @@ function InvitationRoute() {
     ? content.events.filter((event) => event && typeof event === "object")
     : [];
   const gallery = Array.isArray(content.gallery) ? content.gallery : [];
-  const musicEnabled = Boolean(
-    content.music_enabled && typeof content.music_url === "string" && content.music_url.trim(),
-  );
+  // Resolve music source: prefer RPC URL, otherwise fallback to bundled MP3
+  const musicSrc = content.music_enabled && typeof content.music_url === "string" && content.music_url.trim()
+    ? content.music_url.trim()
+    : fallbackMusic;
+
+  const musicEnabled = Boolean(content.music_enabled && musicSrc);
 
   return (
     <main className="zar-page relative min-h-screen overflow-x-hidden">
@@ -99,7 +103,8 @@ function InvitationRoute() {
       <RsvpSection />
       <ClosingSection content={content} publicUrl={payload.public_url} />
       <BrandTicker brandName={payload.brand_name} />
-      {musicEnabled && <MusicToggle src={content.music_url as string} />}
+      {musicEnabled && <MusicToggle src={musicSrc} autoPlay={true} />}
+
     </main>
   );
 }
