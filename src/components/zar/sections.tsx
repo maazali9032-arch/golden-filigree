@@ -502,9 +502,6 @@ export function ClosingSection({
           ))}
         </div>
       )}
-
-      // QR omitted from invitation card per integration spec
-
       {(has(content.groom_name) || has(content.bride_name)) && (
         <Rise delay={0.3}>
           <p className="mt-12 font-display text-base italic text-ink-soft">Love</p>

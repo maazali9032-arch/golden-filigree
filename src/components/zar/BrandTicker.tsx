@@ -23,7 +23,7 @@ export function BrandTicker({ brandName }: { brandName?: string | null | undefin
   return (
     <div
       aria-hidden="true"
-      className="pointer-events-none fixed inset-x-0 top-[70%] z-40 flex h-[1.7vh] min-h-[15px] items-center overflow-hidden border-y border-gold/25 bg-gold-veil backdrop-blur-[1px]"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex h-[1.7vh] min-h-[15px] items-center overflow-hidden border-y border-gold/25 bg-gold-veil backdrop-blur-[1px]"
     >
       <div
         className={`flex ${reduce ? "" : "animate-brand-marquee"}`}
